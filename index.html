@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The New K5 (JF) LAB</title>
+    <!-- 디자인을 예쁘게 만들어주는 Tailwind CSS 불러오기 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 웹사이트 폰트 및 부드러운 효과 설정 */
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body { font-family: 'Pretendard', sans-serif; background-color: #020617; color: white; }
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative">
+
+    <!-- 1. 로그인 (비밀번호) 화면 -->
+    <div id="login-screen" class="flex-1 flex items-center justify-center p-4 z-10">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl max-w-sm w-full">
+            <h1 class="text-3xl font-bold text-center text-white mb-2">K5 LAB</h1>
+            <p class="text-center text-slate-400 text-sm mb-6">오너 프라이빗 관리 시스템<br>(임시 비밀번호: k5)</p>
+            
+            <input type="password" id="password-input" placeholder="비밀번호 입력" 
+                class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 mb-4 text-center tracking-[0.3em] text-white focus:outline-none focus:border-rose-500">
+            <p id="error-msg" class="text-rose-500 text-xs text-center mb-4 hidden">비밀번호가 틀렸습니다.</p>
+            
+            <button onclick="checkPassword()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg hover:shadow-rose-600/30">
+                접속하기
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. 메인 대시보드 화면 (처음엔 숨김 처리) -->
+    <div id="main-screen" class="hidden flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full fade-in">
+        <div class="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
+            <h1 class="text-2xl md:text-3xl font-bold text-white"><span class="text-rose-500">THE NEW K5</span> (JF)</h1>
+            <button onclick="logout()" class="text-sm text-slate-400 hover:text-white bg-slate-800 px-3 py-1 rounded-lg">로그아웃</button>
+        </div>
+
+        <!-- 정비 주기표 -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 mb-8 shadow-lg">
+            <h2 class="text-xl font-bold mb-4 text-rose-400">주요 정비 주기</h2>
+            <ul class="text-sm text-slate-300 space-y-3">
+                <li class="flex justify-between border-b border-slate-800 pb-2"><span>엔진오일 및 필터</span> <span>10,000km 또는 1년</span></li>
+                <li class="flex justify-between border-b border-slate-800 pb-2"><span>에어컨 필터</span> <span>15,000km</span></li>
+                <li class="flex justify-between border-b border-slate-800 pb-2"><span>브레이크 액</span> <span>40,000km 또는 2년</span></li>
+                <li class="flex justify-between"><span>미션오일</span> <span>100,000km 점검/교체</span></li>
+            </ul>
+        </div>
+
+        <!-- 차계부 입력 폼 -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 mb-8 shadow-lg">
+            <h2 class="text-xl font-bold mb-4">차계부 기록 추가</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <input type="date" id="log-date" class="bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-white">
+                <select id="log-category" class="bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-white">
+                    <option value="엔진오일">엔진오일</option>
+                    <option value="타이어">타이어</option>
+                    <option value="세차/기타">세차/기타</option>
+                </select>
+                <input type="number" id="log-cost" placeholder="비용 (예: 50000)" class="bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-white">
+                <input type="text" id="log-note" placeholder="예: 타이어픽 쿠폰할인 엔진오일 교환" class="bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-white">
+            </div>
+            <button onclick="addLog()" class="w-full bg-white text-slate-900 font-bold py-2 rounded-xl hover:bg-slate-200 transition-all">기록 저장하기</button>
+        </div>
+
+        <!-- 차계부 내역 리스트 -->
+        <div>
+            <h2 class="text-xl font-bold mb-4">나의 정비 내역</h2>
+            <div id="log-list" class="space-y-3">
+                <!-- 기록이 여기에 나타납니다 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 날짜 기본값을 오늘로 설정
+        document.getElementById('log-date').valueAsDate = new Date();
+
+        // 1. 비밀번호 확인 기능
+        function checkPassword() {
+            const pwd = document.getElementById('password-input').value;
+            if (pwd === 'k5' || pwd === 'K5') {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-screen').classList.remove('hidden');
+                loadLogs(); // 접속 성공 시 저장된 기록 불러오기
+            } else {
+                const errorMsg = document.getElementById('error-msg');
+                errorMsg.classList.remove('hidden');
+                setTimeout(() => errorMsg.classList.add('hidden'), 2000);
+            }
+        }
+
+        // 로그아웃 기능
+        function logout() {
+            document.getElementById('password-input').value = '';
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        // 2. 기록 저장 및 불러오기 기능 (스마트폰/PC 브라우저에 저장됨)
+        function addLog() {
+            const date = document.getElementById('log-date').value;
+            const category = document.getElementById('log-category').value;
+            const cost = document.getElementById('log-cost').value;
+            const note = document.getElementById('log-note').value;
+
+            if(!cost) return alert("비용을 입력해주세요!");
+
+            const newLog = { id: Date.now(), date, category, cost, note };
+            
+            // 기존 기록 가져오기
+            let logs = JSON.parse(localStorage.getItem('k5logs')) || [];
+            logs.unshift(newLog); // 최신 기록을 맨 위로
+            
+            // 다시 저장
+            localStorage.setItem('k5logs', JSON.stringify(logs));
+            
+            // 입력칸 비우기 및 리스트 새로고침
+            document.getElementById('log-cost').value = '';
+            document.getElementById('log-note').value = '';
+            loadLogs();
+        }
+
+        function loadLogs() {
+            const logList = document.getElementById('log-list');
+            const logs = JSON.parse(localStorage.getItem('k5logs')) || [];
+            
+            if(logs.length === 0) {
+                logList.innerHTML = '<div class="text-center text-slate-500 py-8 bg-slate-900 rounded-2xl">아직 기록이 없습니다.</div>';
+                return;
+            }
+
+            logList.innerHTML = logs.map(log => `
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col md:flex-row justify-between md:items-center gap-2 border-l-4 border-l-rose-500">
+                    <div class="flex items-center gap-4">
+                        <span class="text-rose-400 font-bold text-sm">${log.category}</span>
+                        <span class="text-slate-300 text-sm">${log.date}</span>
+                    </div>
+                    <div class="text-white font-medium break-keep">${log.note || '-'}</div>
+                    <div class="flex items-center justify-between md:justify-end gap-4 mt-2 md:mt-0">
+                        <span class="font-bold text-lg">${Number(log.cost).toLocaleString()}원</span>
+                        <button onclick="deleteLog(${log.id})" class="text-xs bg-slate-800 hover:bg-rose-600 px-2 py-1 rounded text-slate-300 hover:text-white transition-colors">삭제</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteLog(id) {
+            if(!confirm("기록을 삭제하시겠습니까?")) return;
+            let logs = JSON.parse(localStorage.getItem('k5logs')) || [];
+            logs = logs.filter(log => log.id !== id);
+            localStorage.setItem('k5logs', JSON.stringify(logs));
+            loadLogs();
+        }
+    </script>
+</body>
+</html>
