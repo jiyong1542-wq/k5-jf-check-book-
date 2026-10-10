@@ -21,7 +21,7 @@
     <div id="login-screen" class="flex-1 flex items-center justify-center p-4 z-10">
         <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl max-w-sm w-full">
             <h1 class="text-3xl font-bold text-center text-white mb-2">K5 LAB</h1>
-            <p class="text-center text-slate-400 text-sm mb-6">오너 프라이빗 관리 시스템<br>(임시 비밀번호: k5)</p>
+            <p class="text-center text-slate-400 text-sm mb-6">오너 프라이빗 관리 시스템</p>
             
             <input type="password" id="password-input" placeholder="비밀번호 입력" 
                 class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 mb-4 text-center tracking-[0.3em] text-white focus:outline-none focus:border-rose-500">
@@ -83,7 +83,7 @@
         // 1. 비밀번호 확인 기능
         function checkPassword() {
             const pwd = document.getElementById('password-input').value;
-            if (pwd === 'k5' || pwd === 'K5') {
+            if (pwd === '1541' || pwd === '1541') {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-screen').classList.remove('hidden');
                 loadLogs(); // 접속 성공 시 저장된 기록 불러오기
